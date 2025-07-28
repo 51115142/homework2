@@ -1,3 +1,11 @@
+/******************************************************************************
+
+                              Online C++ Compiler.
+               Code, Compile, Run and Debug C++ program online.
+Write your code in this editor and press "Run" button to compile and execute it.
+
+*******************************************************************************/
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -13,6 +21,8 @@ private:
     int exp;
 public:
     Term(float c = 0.0, int e = 0) : coef(c), exp(e) {}
+    float getCoef() const { return coef; }
+    int getExp() const { return exp; }
 };
 
 class Polynomial {
@@ -87,8 +97,8 @@ std::ostream& operator<<(std::ostream& os, const Polynomial& poly) {
 
     bool first = true;
     for (int i = 0; i < poly.terms; ++i) {
-        float c = poly.termArray[i].coef;
-        int e = poly.termArray[i].exp;
+        float c = poly.termArray[i].getCoef();
+        int e = poly.termArray[i].getExp();
         if (c == 0) continue;
 
         if (!first) os << (c > 0 ? " + " : " - ");
