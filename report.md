@@ -4,13 +4,13 @@
 
 ## 解題說明
 
-本作業要求實作一個 Polynomial 類別，根據提供的抽象資料型別（ADT）與私有資料成員（圖 1 和圖 2），並實作 >> 和 << 運算子來處理多項式的輸入與輸出。輸入格式為係數與指數對，輸出需符合數學多項式表示法（例如，3x^2 + 2x - 1），並按指數遞減排序。
+本作業要求實作一個 Polynomial 類別，根據提供的抽象資料型別（ADT）與私有資料成員，並實作 >> 和 << 運算子來處理多項式的輸入與輸出。輸入格式為係數與指數對，輸出需符合數學多項式表示法（例如，3x^2 + 2x - 1），並按指數遞減排序。
 
 ### 解題策略
 
 1. 類別設計：
 
-    Term 類別：封裝多項式的單一項，包含私有係數 (coef, float) 和指數 (exp, int)，提供公開 getter 方法 (coefValue, expValue) 和比較運算子 (operator<) 以支援排序。
+    Term 類別：封裝多項式的單一項，包含私有係數 (coef) 和指數 (exp)，提供公開 getter 方法和比較運算子 (operator<) 以支援排序。
     Polynomial 類別：使用動態陣列 (terms) 儲存 Term 物件，管理項數 (size) 和容量 (limit)，支援容量動態擴展。
 
 2. 輸入處理：
@@ -43,27 +43,34 @@
 
 class Polynomial;
 
+// Term 類別：代表一個多項式中的一項，例如 3x^2
 class Term {
+    // 讓 Polynomial 類別與 I/O 運算子可以存取 private 成員
     friend class Polynomial;
     friend std::ostream& operator<<(std::ostream& os, const Term& term);
     friend std::istream& operator>>(std::istream& is, Term& term);
 private:
-    float coef;
-    int exp;
+    float coef;  // 係數
+    int exp;     // 指數
 public:
+    // 建構子（預設的係數為 0，指數為 0）
     Term(float c = 0.0, int e = 0) : coef(c), exp(e) {}
+    
+    // Getter：取得係數與指數
     float getCoef() const { return coef; }
     int getExp() const { return exp; }
 };
 
+// Polynomial 類別：為了儲存多項式的多個項（Term）
 class Polynomial {
     friend std::ostream& operator<<(std::ostream& os, const Polynomial& poly);
     friend std::istream& operator>>(std::istream& is, Polynomial& poly);
 private:
-    Term* termArray;
-    int capacity;
-    int terms;
+    Term* termArray;   // 動態陣列儲存項目
+    int capacity;      // 陣列的最大容量
+    int terms;         // 目前的項目數量
 
+    // 當項目超過容量時，擴展容量為原本的兩倍
     void expandCapacity() {
         capacity *= 2;
         Term* newArray = new Term[capacity];
@@ -73,6 +80,7 @@ private:
         termArray = newArray;
     }
 
+    // 將項目按照指數從大到小排序（泡沫排序法）
     void sortTerms() {
         for (int i = 0; i < terms - 1; ++i)
             for (int j = i + 1; j < terms; ++j)
@@ -84,79 +92,84 @@ private:
     }
 
 public:
+    // 建構子：初始化項目陣列與容量
     Polynomial(int initialCapacity = 4) : capacity(initialCapacity), terms(0) {
         termArray = new Term[capacity];
     }
 
+    // 解構子：釋放動態記憶體
     ~Polynomial() {
         delete[] termArray;
     }
 
+    // 新增一個項目進入多項式
     void addTerm(float c, int e) {
-        if (terms >= capacity) expandCapacity();
-        termArray[terms++] = Term(c, e);
+        if (terms >= capacity) expandCapacity();  // 超過容量就擴充
+        termArray[terms++] = Term(c, e);          // 加入新項
     }
 };
-
+// 讀取單一 Term（係數與指數）
 std::istream& operator>>(std::istream& is, Term& term) {
     return is >> term.coef >> term.exp;
 }
-
+// 輸出單一 Term，例如 3x^2
 std::ostream& operator<<(std::ostream& os, const Term& term) {
     os << term.coef << "x^" << term.exp;
     return os;
 }
-
+// 讀取 Polynomial：從一整行輸入讀取多個 (係數 指數) 組合
 std::istream& operator>>(std::istream& is, Polynomial& poly) {
-    poly.terms = 0;
+    poly.terms = 0;  // 清空原本的項目數
     std::string line;
-    std::getline(is, line);
-    std::istringstream iss(line);
+    std::getline(is, line);             // 讀取整行
+    std::istringstream iss(line);      // 用字串流來逐項讀取
     float coef; int exp;
     while (iss >> coef >> exp)
-        poly.addTerm(coef, exp);
+        poly.addTerm(coef, exp);       // 逐項加入多項式
     return is;
 }
-
+// 輸出 Polynomial：轉成數學形式如 "3x^2 + 2x + 1"
 std::ostream& operator<<(std::ostream& os, const Polynomial& poly) {
     if (poly.terms == 0) {
         os << "0";
         return os;
     }
-
+    // 排序項目（指數從大到小）
     ((Polynomial&)poly).sortTerms();
 
     bool first = true;
     for (int i = 0; i < poly.terms; ++i) {
         float c = poly.termArray[i].getCoef();
         int e = poly.termArray[i].getExp();
-        if (c == 0) continue;
+        if (c == 0) continue;  // 跳過係數為 0 的項
 
+        // 處理正負號
         if (!first) os << (c > 0 ? " + " : " - ");
         else if (c < 0) os << "-";
 
         float absC = c < 0 ? -c : c;
 
+        // 如果係數不是 1，或是是常數項，才印出係數
         if (absC != 1 || e == 0) os << absC;
 
+        // 印出變數與指數
         if (e > 0) {
             os << "x";
             if (e > 1) os << "^" << e;
         }
-
         first = false;
     }
-    if (first) os << "0";
+    if (first) os << "0"; // 如果都是 0 項，輸出 0
     return os;
 }
-
 int main() {
     Polynomial poly;
     std::cout << "輸入多項式 (係數 指數): ";
-    std::cin >> poly;
+    std::cin >> poly; 
     std::cout << "多項式: " << poly << "\n";
     return 0;
 }
+
 ```
 
 ## 效能分析
@@ -180,12 +193,12 @@ int main() {
 ### 測試案例
 
 | 測試案例 | 輸入 (係數 指數) | 預期輸出 | 實際輸出 |
-|----------|--------------|----------|----------|
-| 測試一   | 3 2           | 3x^2      |        |
-| 測試二   | 1 1 -1 0      | x - 1     |        |
-| 測試三   | -2 3 0 2 5 0  | -2x^3+5   |        |
-| 測試四   | 0 5 0 4       | 0         |        |
-| 測試五   |               | 0         |        |
+|----------|--------------|--------------|------------|
+| 測試一   | 5 8           | 5x^8         | 5x^8         |
+| 測試二   | 5 8 0 -2 3 0  | 5x^8 + 3     | 5x^8 + 3     |
+| 測試三   | -3 7 2 5      | -3x^7 + 2x^5 | -3x^7 + 2x^5 |
+| 測試四   | -3 7 -2 5     | -3x^7 - 2x^5 | -3x^7 - 2x^5 |
+| 測試五   | 0 4 0 2       | 0            | 0            |
 
 ### 結論
 
