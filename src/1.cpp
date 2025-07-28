@@ -112,9 +112,9 @@ std::ostream& operator<<(std::ostream& os, const Polynomial& poly) {
 }
 
 int main() {
-    Polynomial p;
-    std::cout << "Enter polynomial (coef exp pairs): ";
-    std::cin >> p;
-    std::cout << "Polynomial: " << p << std::endl;
+    Polynomial poly;
+    std::cout << "輸入多項式 (係數 指數): ";
+    std::cin >> poly;
+    std::cout << "多項式: " << poly << "\n";
     return 0;
 }
